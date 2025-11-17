@@ -1,94 +1,82 @@
 #!/usr/bin/env python
 import sys
-import warnings
+import os
+from dotenv import load_dotenv
 
-from datetime import datetime
+# Load environment variables
+load_dotenv()
 
-from planarian.crew import Planarian
+# Check for Gemini API key
+if not os.getenv('GOOGLE_API_KEY'):
+    print("❌ ERROR: GOOGLE_API_KEY not found in .env file")
+    print("\n📝 To get a FREE Gemini API key:")
+    print("1. Visit: https://makersuite.google.com/app/apikey")
+    print("2. Click 'Create API Key'")
+    print("3. Copy the key")
+    print("4. Add to .env file: GOOGLE_API_KEY=your_key_here")
+    sys.exit(1)
 
-warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+from crew import PlanarianCrew
 
-# This main file is intended to be a way for you to run your
-# crew locally, so refrain from adding unnecessary logic into this file.
-# Replace with inputs you want to test with, it will automatically
-# interpolate any tasks and agents information
+def build_agent(user_input):
+    """
+    Build an AI agent using Gemini
+    
+    Args:
+        user_input (dict): User requirements
+    """
+    
+    print("🚀 Starting Planaria AI Agent Builder (Gemini-Powered)...")
+    print(f"📋 Building {user_input.get('agent_type')} agent...")
+    print(f"🤖 Using Model: {user_input.get('desired_model', 'gemini-1.5-flash')}")
+    print()
+    
+    # Initialize the crew
+    try:
+        crew = PlanarianCrew().crew()
+        
+        # Execute with inputs
+        result = crew.kickoff(inputs=user_input)
+        
+        print("\n" + "="*60)
+        print("✅ AGENT BUILT SUCCESSFULLY!")
+        print("="*60)
+        print(result)
+        print("\n" + "="*60)
+        
+        return result
+        
+    except Exception as e:
+        print(f"\n❌ Error building agent: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 def run():
-    """
-    Run the crew.
-    """
-    inputs = {
-        'topic': 'AI LLMs',
-        'current_year': str(datetime.now().year)
+    """Run with example input"""
+    
+    # Example user input
+    user_input = {
+        'agent_type': 'chatbot',
+        'use_case': 'Customer support assistant for a SaaS product',
+        'desired_model': 'gemini-1.5-flash',
+        'personality': 'helpful and professional',
+        'target_framework': 'react',
+        'additional_requirements': 'Should handle billing, features, and troubleshooting questions'
     }
+    
+    print("="*60)
+    print("PLANARIA AI - GEMINI AGENT BUILDER")
+    print("="*60)
+    print(f"\nAgent Type: {user_input['agent_type']}")
+    print(f"Use Case: {user_input['use_case']}")
+    print(f"Model: {user_input['desired_model']}")
+    print(f"Framework: {user_input['target_framework']}")
+    print("\n" + "="*60 + "\n")
+    
+    result = build_agent(user_input)
+    
+    return result
 
-    try:
-        Planarian().crew().kickoff(inputs=inputs)
-    except Exception as e:
-        raise Exception(f"An error occurred while running the crew: {e}")
-
-
-def train():
-    """
-    Train the crew for a given number of iterations.
-    """
-    inputs = {
-        "topic": "AI LLMs",
-        'current_year': str(datetime.now().year)
-    }
-    try:
-        Planarian().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
-
-    except Exception as e:
-        raise Exception(f"An error occurred while training the crew: {e}")
-
-def replay():
-    """
-    Replay the crew execution from a specific task.
-    """
-    try:
-        Planarian().crew().replay(task_id=sys.argv[1])
-
-    except Exception as e:
-        raise Exception(f"An error occurred while replaying the crew: {e}")
-
-def test():
-    """
-    Test the crew execution and returns the results.
-    """
-    inputs = {
-        "topic": "AI LLMs",
-        "current_year": str(datetime.now().year)
-    }
-
-    try:
-        Planarian().crew().test(n_iterations=int(sys.argv[1]), eval_llm=sys.argv[2], inputs=inputs)
-
-    except Exception as e:
-        raise Exception(f"An error occurred while testing the crew: {e}")
-
-def run_with_trigger():
-    """
-    Run the crew with trigger payload.
-    """
-    import json
-
-    if len(sys.argv) < 2:
-        raise Exception("No trigger payload provided. Please provide JSON payload as argument.")
-
-    try:
-        trigger_payload = json.loads(sys.argv[1])
-    except json.JSONDecodeError:
-        raise Exception("Invalid JSON payload provided as argument")
-
-    inputs = {
-        "crewai_trigger_payload": trigger_payload,
-        "topic": "",
-        "current_year": ""
-    }
-
-    try:
-        result = Planarian().crew().kickoff(inputs=inputs)
-        return result
-    except Exception as e:
-        raise Exception(f"An error occurred while running the crew with trigger: {e}")
+if __name__ == "__main__":
+    run()

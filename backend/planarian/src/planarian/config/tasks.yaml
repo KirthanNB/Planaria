@@ -1,17 +1,129 @@
-research_task:
+analyze_requirements:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
+    Analyze the user's requirements for their AI agent using Gemini.
+    
+    User wants to build:
+    - Agent Type: {agent_type}
+    - Use Case: {use_case}
+    - Desired Model: {desired_model}
+    - Personality: {personality}
+    - Target Framework: {target_framework}
+    - Additional Requirements: {additional_requirements}
+    
+    Your task:
+    1. Recommend the best Gemini model (gemini-pro, gemini-1.5-flash, gemini-1.5-pro)
+    2. Define the agent configuration including model settings
+    3. Outline technical requirements
+    4. Consider that Gemini is FREE with long context windows and fast inference
+    
+    Provide your analysis in a structured format that includes:
+    - Recommended Gemini model and why
+    - Agent configuration (name, type, model, personality)
+    - Technical specifications (temperature, max tokens, etc.)
+    - Any special considerations
   expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    A detailed configuration analysis with model recommendation,
+    agent settings, and technical specifications.
+  agent: config_analyst
 
-reporting_task:
+create_system_prompt:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    Based on the previous agent's analysis, create an optimized system prompt for Gemini.
+    
+    The user wants a {personality} {agent_type} for: {use_case}
+    Target model: {desired_model}
+    
+    Your task:
+    1. Write a clear, effective system prompt optimized for Gemini models
+    2. Include personality traits and behavioral guidelines
+    3. Add relevant constraints and safety guidelines
+    4. Use techniques that work well with Gemini (clear roles, structured instructions)
+    
+    Remember Gemini works best with:
+    - Clear role definitions
+    - Specific behavioral guidelines  
+    - Conversational tone
+    - Structured instructions
+    
+    Output the complete system prompt that will be used for the agent.
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    A production-ready system prompt optimized for Gemini, along with
+    brief notes on techniques used.
+  agent: prompt_engineer
+  context:
+    - analyze_requirements
+
+generate_code:
+  description: >
+    Generate production-ready code using Gemini API for a {agent_type}.
+    
+    Based on the previous agents' work, generate complete working code for {target_framework}.
+    
+    Your task:
+    1. Generate complete working code for {target_framework}
+    2. Use appropriate SDK:
+       - React/Node: @google/generative-ai package
+       - Python: google-generativeai package
+    3. Include proper error handling and retry logic
+    4. Add environment variable configuration
+    5. Include usage examples and comments
+    
+    The code should be production-ready and copy-paste ready.
+    Include all necessary files: main code, package.json/requirements.txt, .env example, README.
+  expected_output: >
+    Complete code package with main file, dependencies file, 
+    environment example, and README with setup instructions.
+  agent: code_generator
+  context:
+    - analyze_requirements
+    - create_system_prompt
+
+validate_configuration:
+  description: >
+    Review and validate everything created by the previous agents.
+    
+    For this {agent_type} agent for {use_case}:
+    
+    Your task:
+    1. Validate the system prompt for clarity and effectiveness
+    2. Check the generated code for correctness and best practices
+    3. Verify Gemini API integration is correct
+    4. Test for security issues or edge cases
+    5. Ensure error handling is robust
+    
+    Provide a comprehensive validation report with:
+    - Overall status (pass/warning/fail)
+    - Any issues found
+    - Recommendations for improvement
+  expected_output: >
+    Validation report with status, issues found (if any),
+    security assessment, and recommendations.
+  agent: qa_specialist
+  context:
+    - analyze_requirements
+    - create_system_prompt
+    - generate_code
+
+create_documentation:
+  description: >
+    Create comprehensive documentation for the Gemini-powered {agent_type} agent.
+    
+    Based on all the previous work, create developer-friendly documentation.
+    
+    Your task:
+    1. Write a clear README with setup instructions
+    2. Explain how to get a FREE Gemini API key (https://makersuite.google.com/app/apikey)
+    3. Document configuration options
+    4. Provide usage examples
+    5. Add troubleshooting tips
+    6. Include deployment instructions
+    
+    Make it easy for developers to understand and use.
+  expected_output: >
+    Complete documentation package including README, setup guide,
+    configuration docs, usage examples, and troubleshooting section.
+  agent: documentation_writer
+  context:
+    - analyze_requirements
+    - generate_code
+    - validate_configuration

@@ -2,126 +2,181 @@
 
 import React from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 
-const Navbar = () => {
+/**
+ * Corrected Navbar:
+ * - Parent container is centered (logo + nav are next to each other).
+ * - Each group (logoGroup, navGroup) starts at x=0 (centered as a group).
+ * - As scrollY increases, logoX goes negative and navX goes positive.
+ * - useSpring smooths the motion so movement is proportional and buttery.
+ *
+ * Tweak:
+ *  - SEPARATION controls how many px they move apart at full scroll.
+ *  - RANGE controls how many px of scrolling gives full separation.
+ */
+
+export default function Navbar() {
+  const { scrollY } = useScroll();
+
+  // Tweak knobs
+  const RANGE = 350; // how many px of scroll for full transition
+  const SEPARATION = 360; // how many px logo/nav move apart at full scroll
+
+  // Map scroll to numeric x offsets (logo moves left -> negative, nav moves right -> positive)
+  const logoXRaw = useTransform(scrollY, [0, RANGE], [0, -SEPARATION]);
+  const navXRaw = useTransform(scrollY, [0, RANGE], [0, SEPARATION]);
+
+  // Smooth with springs
+  const springConfig = { damping: 28, stiffness: 150 };
+  const logoX = useSpring(logoXRaw, springConfig);
+  const navX = useSpring(navXRaw, springConfig);
+
+  // Slight background blur growth mapped to scroll (optional)
+  const blurRaw = useTransform(scrollY, [0, RANGE], [8, 20]);
+  const blur = useSpring(blurRaw, { damping: 30, stiffness: 140 });
+
   return (
-    <nav
-      className="
-        fixed top-0 left-0 w-full h-20 z-50
-        flex items-center justify-between
-        px-8 backdrop-blur-md -backdrop-brightness-50
-      "
-    >
-      {/* ================= LOGO + BRAND NAME ================= */}
-      <div
-        className="
-          flex items-center gap-3 px-4 py-2
-          bg-linear-to-br from-slate-800/60 via-slate-900/70 to-slate-950/80
-          border border-white/10 rounded-tr-2xl rounded-bl-2xl
-          shadow-[0_8px_24px_rgba(0,0,0,0.25)]
-          select-none relative overflow-hidden
-        "
-      >
-        {/* Glass Highlight */}
-        <div className="absolute inset-0 bg-white/10 opacity-20 blur-xl pointer-events-none" />
+    <nav className="fixed top-0 left-0 w-full z-50 pointer-events-auto">
+      <div className="w-full h-24 flex items-center justify-center px-4">
+        <div className="relative w-full max-w-7xl flex items-center justify-center">
+          {/* Centered group wrapper */}
+          <div className="flex items-center gap-6">
+            {/* LOGO + BRAND GROUP */}
+            <motion.div
+              style={{ x: logoX }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="
+  flex items-center gap-3 px-6 py-2
+  bg-blue-800/20 backdrop-blur-2xl
+  border border-white/15
+  rounded-tr-2xl rounded-bl-2xl
+  hover:rounded-tl-4xl hover:rounded-br-4xl
+  shadow-[0_10px_30px_rgba(0,0,0,0.35)]
+  transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+  relative overflow-hidden
+"
 
-        {/* ---------- Vercel Logo ---------- */}
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
-          <Image
-            src="/vercel.svg"
-            alt="Vercel Logo"
-            width={24}
-            height={24}
-            className="relative z-10"
-          />
-        </motion.div>
+            >
+              {/* Glass highlight / blur overlay */}
+              <motion.div
+                style={{ backdropFilter: blur, opacity: 0.22 }}
+                className="absolute inset-0 bg-white/6 pointer-events-none"
+              />
 
-        {/* ---------- Brand Name ---------- */}
-        <motion.span
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="
-            font-extrabold tracking-tight text-2xl
-            bg-linear-to-r from-blue-300 via-blue-100 to-sky-300 
-            bg-clip-text text-transparent
-            drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]
-            relative z-10
-          "
-        >
-          Planaria
-        </motion.span>
+              {/* Logo */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6, rotate: -16 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                transition={{ delay: 0.06, type: "spring", stiffness: 90, damping: 16 }}
+                className="relative z-20"
+              >
+                <Image src="/vercel.svg" alt="Planaria" width={28} height={28} />
+              </motion.div>
+
+              {/* Brand */}
+              <motion.span
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12, duration: 0.6 }}
+                className="relative z-20 font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-sky-200 to-blue-400"
+              >
+                Planaria
+              </motion.span>
+            </motion.div>
+
+            {/* NAV GROUP */}
+            <motion.div
+              style={{ x: navX }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.05, duration: 0.6 }}
+              className="relative flex items-center gap-4 px-4 py-2"
+            >
+              {/* Nav container (keeps leaf/rounded styles preserved) */}
+              <div
+  className="
+    flex items-center gap-3 px-5 py-2
+    bg-white/10 backdrop-blur-xl
+    border border-white/10
+    shadow-[0_8px_24px_rgba(0,0,0,0.25)]
+    rounded-tr-2xl rounded-bl-2xl
+    transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+  "
+>
+  <NavItem label="Home" delay={0.06} />
+  <NavItem label="Docs" delay={0.12} />
+  <NavItem label="About" delay={0.18} />
+  <NavPill label="Build Agent" delay={0.22} />
+  <CallToAction label="Sign Up" delay={0.26} />
+</div>
+
+            </motion.div>
+          </div>
+        </div>
       </div>
-
-      {/* ================= NAV MENU ================= */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.6 }}
-        className="
-          relative flex items-center gap-6 px-8 py-3
-          bg-white/10 border border-white/20
-          rounded-tr-2xl rounded-bl-2xl shadow-lg backdrop-blur-2xl 
-          transition-all duration-300 w-fit 
-        "
-      >
-        {/* Soft Light */}
-        <div className="absolute inset-0 rounded-tr-2xl rounded-bl-2xl bg-linear-to-br from-white/20 to-white/5 opacity-30 pointer-events-none" />
-
-        <NavItem label="Home" />
-        <NavItem label="Docs" />
-        <NavItem label="About" />
-        <NavPill label="Build Agent" />
-        <CallToAction label="Sign Up" />
-      </motion.div>
     </nav>
   );
-};
+}
 
-export default Navbar;
+/* ---------------- SUB COMPONENTS (leaf-shaped preserved) ---------------- */
 
-/* -------------------------- Sub Components -------------------------- */
+const NavItem = ({ label = "Item", delay = 0 }) => (
+  <motion.button
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: delay + 0.02, duration: 0.45, type: "spring", stiffness: 110, damping: 16 }}
+className="
+  text-gray-200 font-medium cursor-pointer
+  px-3 py-1.5
 
-const NavItem = ({ label }) => (
-  <span
-    className="
-      text-gray-200 font-medium cursor-pointer
-      transition-all duration-300 hover:rounded-br-4xl hover:rounded-tl-4xl
-      relative z-10
-    "
+"
+
+    aria-label={label}
   >
     {label}
-  </span>
+  </motion.button>
 );
 
-const NavPill = ({ label }) => (
-  <span
+const NavPill = ({ label = "Pill", delay = 0 }) => (
+  <motion.button
+    initial={{ opacity: 0, scale: 0.92 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay: delay + 0.02, duration: 0.45, type: "spring", stiffness: 120, damping: 16 }}
     className="
-      text-gray-200 px-4 py-1.5 rounded-tr-2xl rounded-bl-2xl border border-white/20
-      cursor-pointer transition-all duration-300 
-      hover:rounded-br-4xl hover:rounded-tl-4xl
-      relative z-10
-    "
+  text-gray-200 px-5 py-2 font-semibold
+  rounded-tr-2xl rounded-bl-2xl
+  shadow-[0_6px_20px_rgba(0,0,0,0.25)]
+  hover:bg-white/10
+  hover:rounded-tl-4xl hover:rounded-br-4xl
+  border border-gray-300/30
+  transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)]
+  relative z-30
+"
+
   >
     {label}
-  </span>
+  </motion.button>
 );
 
-const CallToAction = ({ label }) => (
-  <span
-    className="
-      bg-blue-600 text-white px-5 py-2 rounded-tr-2xl rounded-bl-2xl ml-2
-      shadow-lg shadow-blue-500/20 cursor-pointer
-      transition-all duration-300 hover:bg-blue-500 
-      hover:rounded-br-4xl hover:rounded-tl-4xl
-      relative z-10
-    "
+const CallToAction = ({ label = "CTA", delay = 0 }) => (
+  <motion.button
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay: delay + 0.03, duration: 0.45, type: "spring", stiffness: 140, damping: 18 }}
+className="
+  text-white px-5 py-2 font-semibold
+  bg-linear-to-br from-blue-400/30 via-blue-600/20 to-blue-800/30
+  rounded-tr-2xl rounded-bl-2xl
+  transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+  hover:rounded-tl-4xl hover:rounded-br-4xl
+  hover:bg-linear-to-br hover:from-blue-300/40 hover:via-blue-500/30 hover:to-blue-700/40
+  relative z-30
+"
+
   >
     {label}
-  </span>
+  </motion.button>
 );

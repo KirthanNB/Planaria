@@ -21,14 +21,14 @@ const WORDS = [
 // 🔥 TEXT + GIF ANIMATION VARIANTS
 // --------------------------------------
 const wordVariants = {
-  hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
+  hidden: { opacity: 0, y: 20, filter: "blur(3px)" },
   visible: {
     opacity: 1,
     y: 0,
     filter: "blur(0)",
-    transition: { duration: 0.45 },
+    transition: { duration: 0.5, ease: "easeOut" },
   },
-  exit: { opacity: 0, y: -20, filter: "blur(8px)" },
+  exit: { opacity: 0, y: -20, filter: "blur(3px)" },
 };
 
 const gifVariants = {
@@ -48,7 +48,7 @@ export default function Hero() {
   useEffect(() => {
     const cycle = setInterval(() => {
       setIndex((prev) => (prev + 1) % WORDS.length);
-    }, 1600);
+    }, 3000);
 
     return () => clearInterval(cycle);
   }, []);

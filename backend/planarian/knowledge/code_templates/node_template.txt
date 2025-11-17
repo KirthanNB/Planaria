@@ -1,0 +1,122 @@
+import dotenv from 'dotenv';
+{% if provider == 'openai' %}
+import OpenAI from 'openai';
+{% elif provider == 'anthropic' %}
+import Anthropic from '@anthropic-ai/sdk';
+{% elif provider == 'google' %}
+import { GoogleGenerativeAI } from '@google/generative-ai';
+{% endif %}
+import readline from 'readline';
+
+dotenv.config();
+
+class {{ agent_name.replace(' ', '') }}Agent {
+  constructor() {
+    {% if provider == 'openai' %}
+    this.client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+    {% elif provider == 'anthropic' %}
+    this.client = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY
+    });
+    {% elif provider == 'google' %}
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+    this.model = genAI.getGenerativeModel({ model: '{{ model }}' });
+    {% endif %}
+    
+    this.systemPrompt = `{{ system_prompt }}`;
+    this.conversationHistory = [];
+  }
+
+  async chat(userMessage) {
+    this.conversationHistory.push({
+      role: 'user',
+      content: userMessage
+    });
+
+    try {
+      {% if provider == 'openai' %}
+      const response = await this.client.chat.completions.create({
+        model: '{{ model }}',
+        messages: [
+          { role: 'system', content: this.systemPrompt },
+          ...this.conversationHistory
+        ],
+        temperature: {{ temperature }},
+        max_tokens: {{ max_tokens }}
+      });
+
+      const assistantMessage = response.choices[0].message.content;
+      
+      {% elif provider == 'anthropic' %}
+      const response = await this.client.messages.create({
+        model: '{{ model }}',
+        max_tokens: {{ max_tokens }},
+        system: this.systemPrompt,
+        messages: this.conversationHistory
+      });
+
+      const assistantMessage = response.content[0].text;
+      
+      {% elif provider == 'google' %}
+      const prompt = this.systemPrompt + '\n\n' +
+        this.conversationHistory
+          .map(m => `${m.role}: ${m.content}`)
+          .join('\n');
+      
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const assistantMessage = response.text();
+      {% endif %}
+
+      this.conversationHistory.push({
+        role: 'assistant',
+        content: assistantMessage
+      });
+
+      return assistantMessage;
+
+    } catch (error) {
+      console.error('Error:', error);
+      return 'Sorry, I encountered an error. Please try again.';
+    }
+  }
+
+  resetConversation() {
+    this.conversationHistory = [];
+  }
+}
+
+// CLI Interface
+async function main() {
+  const agent = new {{ agent_name.replace(' ', '') }}Agent();
+  
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  console.log('Agent initialized. Type "quit" to exit.\n');
+
+  const askQuestion = () => {
+    rl.question('You: ', async (input) => {
+      if (input.toLowerCase() === 'quit' || input.toLowerCase() === 'exit') {
+        console.log('Goodbye!');
+        rl.close();
+        return;
+      }
+
+      const response = await agent.chat(input);
+      console.log(`\nAgent: ${response}\n`);
+      
+      askQuestion();
+    });
+  };
+
+  askQuestion();
+}
+
+main();
+
+export default {{ agent_name.replace(' ', '') }}Agent;
