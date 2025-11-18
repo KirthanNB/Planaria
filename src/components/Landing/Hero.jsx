@@ -96,11 +96,11 @@ export default function Hero() {
         </p>
 
         <div className="flex gap-4 mt-4">
-          <button className="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition-all">
+          <button className="px-6 py-3 rounded-bl-xl rounded-tr-xl hover:rounded-br-3xl hover:rounded-tl-3xl  bg-blue-600 text-white font-semibold shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition-all">
             Build Agent
           </button>
 
-          <button className="px-6 py-3 rounded-xl border border-white/20 bg-white/5 text-gray-200 backdrop-blur-md hover:bg-white/10 transition-all">
+          <button className="px-6 py-3 rounded-bl-xl rounded-tr-xl hover:rounded-br-3xl hover:rounded-tl-3xl border border-white/20 bg-white/5 text-gray-200 backdrop-blur-md hover:bg-white/10 transition-all">
             Explore Docs
           </button>
         </div>
